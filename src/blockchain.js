@@ -1,43 +1,81 @@
-module.exports = {
+var crypto = require("crypto");
 
-    create: function () {
+module.exports = class Blockchain {
 
+    constructor() {
         this.chain = [];
         this.currentTransaction = [];
-        //  this.lastBlock;
 
-        this.newBlock()
-    },
+        /***
+         *genesis block creation
+         *params: proof = 100, prevHash = 1
+         */
+        ;
 
-    newBlock: function (proof, prevHash = null) {
+        console.log(this.newBlock(100, 1));
+    }
+
+    getChain() {
+        return this.chain;
+    }
+
+    newBlock(proof, prevHash) {
 
         var block = {
             index: this.chain.length + 1,
-            timestamp: new Date.now(),
+            timestamp: Date.now().toString(),
             transactions: this.currentTransaction,
             proof: proof,
-            prevHash: prevHash || this.hash(this.chain[-1])
+            prevHash: prevHash || this.hash(this.chain[this.chain.length - 1])
         };
 
         this.currentTransaction = [];
 
         this.chain.push(block);
         return block;
+    }
 
-    },
+    newTransaction(sender, recipient, amount) {
 
-    newTransaction: function (sender, recipient, amount) {
         this.currentTransaction.push({
             sender: sender,
             recipient: recipient,
             amount: amount
         });
 
-        this.lastBlock.index++;
-    },
+        return this.getLastBlock().index + 1;
+    }
 
-    hash: function () {
+    hash(block) {
+        console.log(block);
+        var pwd = JSON.stringify(block);
+        var key = crypto.createHash('sha256').update(pwd).digest('hex');
+        return key;
+    }
 
-    },
+    proofOfWork(lastProof) {
+
+        var proof = 0;
+        while(!this.proofValidation(lastProof, proof)) {
+            proof++;
+        }
+
+        return proof;
+    }
+
+    proofValidation(last_proof, proof) {
+
+        var attemption = (last_proof.toString() + proof.toString());
+        var attemptionHash = crypto.createHash('sha256').update(attemption).digest('hex');
+
+        return attemptionHash.substr(attemptionHash.length - 3) == "000";
+    }
+
+    getLastBlock() {
+        return this.chain[this.chain.length - 1];
+    }
 
 };
+
+
+
